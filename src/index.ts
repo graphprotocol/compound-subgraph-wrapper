@@ -7,7 +7,12 @@ import { ApolloServer } from 'apollo-server-express'
 import { HttpLink } from 'apollo-link-http'
 import { fetch } from 'apollo-env'
 import { GraphQLSchema } from 'graphql'
-import { introspectSchema, makeRemoteExecutableSchema } from 'graphql-tools'
+import {
+  introspectSchema,
+  makeExecutableSchema,
+  makeRemoteExecutableSchema,
+  mergeSchemas,
+} from 'graphql-tools'
 
 /**
  * Logging
@@ -55,11 +60,30 @@ const createQueryNodeHttpLink = () =>
 
 const createSchema = async (): Promise<GraphQLSchema> => {
   let link = createQueryNodeHttpLink()
-  let remoteExcutableSchema = makeRemoteExecutableSchema({
+  let subgraphSchema = makeRemoteExecutableSchema({
     schema: await introspectSchema(link),
     link,
   })
-  return remoteExcutableSchema
+
+  let customSchema = `
+    extend type User {
+      customField: String!
+    }
+  `
+
+  return mergeSchemas({
+    schemas: [subgraphSchema, customSchema],
+    resolvers: {
+      User: {
+        customField: {
+          fragment: `... on User { id }`,
+          resolve: (user, args, context, info) => {
+            return 'customValue'
+          },
+        },
+      },
+    },
+  })
 }
 
 /**
