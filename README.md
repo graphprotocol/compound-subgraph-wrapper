@@ -2,6 +2,15 @@
 
 A wrapper service that extends the Compound subgraph with custom resolvers.
 
+## Todo
+
+- [x] Server application skeleton
+- [x] Remote subgraph schema integration
+- [x] Schema stitching example
+- [ ] Subscriptions
+- [ ] Deployment w/ proxy server
+- [ ] Real resolvers
+
 ## Usage
 
 After cloning this repository, run the following to start the server process:
