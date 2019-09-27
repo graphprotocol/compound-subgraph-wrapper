@@ -1,0 +1,41 @@
+{
+  "name": "@graphprotocol/compound-subgraph-wrapper",
+  "version": "0.0.1",
+  "description": "Service that extends the Compound subgraph with custom resolvers",
+  "main": "dist/index.js",
+  "scripts": {
+    "prepublish": "tsc",
+    "dev": "nodemon --ext ts,graphql --exec 'ts-node src/index.ts'",
+    "test": "jest --passWithNoTests"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/graphprotocol/compound-subgraph-wrapper.git"
+  },
+  "author": "Graph Protocol, Inc.",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/graphprotocol/compound-subgraph-wrapper/issues"
+  },
+  "homepage": "https://github.com/graphprotocol/compound-subgraph-wrapper#readme",
+  "devDependencies": {
+    "nodemon": "^1.19.2",
+    "prettier": "^1.18.2",
+    "ts-node": "^8.4.1",
+    "typescript": "^3.6.3"
+  },
+  "dependencies": {
+    "apollo-env": "^0.5.1",
+    "apollo-link-http": "^1.5.16",
+    "apollo-server": "^2.9.4",
+    "apollo-server-express": "^2.9.4",
+    "body-parser": "^1.19.0",
+    "express": "^4.17.1",
+    "express-ws": "^4.0.0",
+    "graphql": "^14.5.8",
+    "graphql-tag": "^2.10.1",
+    "graphql-tools": "^4.0.5",
+    "http": "^0.0.0",
+    "winston": "^3.2.1"
+  }
+}
