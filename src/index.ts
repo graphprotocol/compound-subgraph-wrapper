@@ -3,9 +3,14 @@ import expressWs from 'express-ws'
 import bodyParser from 'body-parser'
 import winston from 'winston'
 import http from 'http'
+import WebSocket from 'ws'
+import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { ApolloServer } from 'apollo-server-express'
+import { split } from 'apollo-link'
 import { HttpLink } from 'apollo-link-http'
+import { WebSocketLink } from 'apollo-link-ws'
 import { fetch } from 'apollo-env'
+import { getMainDefinition } from 'apollo-utilities'
 import { GraphQLSchema } from 'graphql'
 import {
   introspectSchema,
@@ -59,9 +64,29 @@ const createQueryNodeHttpLink = () =>
   })
 
 const createSchema = async (): Promise<GraphQLSchema> => {
-  let link = createQueryNodeHttpLink()
+  let httpLink = createQueryNodeHttpLink()
+  let remoteSchema = await introspectSchema(httpLink)
+
+  const subscriptionClient = new SubscriptionClient(
+    'wss://api.thegraph.com/subgraphs/name/compound-finance/compound-v2',
+    {
+      reconnect: true,
+    },
+    WebSocket,
+  )
+
+  const wsLink = new WebSocketLink(subscriptionClient)
+  const link = split(
+    ({ query }) => {
+      const { kind, operation } = getMainDefinition(query) as any
+      return kind === 'OperationDefinition' && operation === 'subscription'
+    },
+    wsLink,
+    httpLink,
+  )
+
   let subgraphSchema = makeRemoteExecutableSchema({
-    schema: await introspectSchema(link),
+    schema: remoteSchema,
     link,
   })
 
