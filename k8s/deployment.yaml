@@ -1,0 +1,35 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+metadata:
+  name: compound-subgraph-wrapper
+spec:
+  selector:
+    matchLabels:
+      app: compound-subgraph-wrapper
+  replicas: 1
+  template:
+    metadata:
+      labels:
+        app: compound-subgraph-wrapper
+    spec:
+      volumes:
+        - name: proxy-config
+          configMap:
+            name: compound-subgraph-wrapper-proxy-config
+      containers:
+        - name: compound-subgraph-wrapper-proxy
+          image: nginx:latest
+          ports:
+            - containerPort: 80
+          volumeMounts:
+            - name: proxy-config
+              mountPath: /etc/nginx/nginx.conf
+              subPath: nginx.conf
+        - name: compound-subgraph-wrapper
+          image: compound-subgraph-wrapper:pre-kustomize-invalid
+          ports:
+            - name: http
+              containerPort: 9500
+          env:
+            - name: NODE_ENV
+              value: production
