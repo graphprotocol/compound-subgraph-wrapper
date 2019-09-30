@@ -1,6 +1,5 @@
 images:
-  - gcr.io/$PROJECT_ID/query-node:$TAG_NAME
-  - gcr.io/$PROJECT_ID/index-node:$TAG_NAME
+  - gcr.io/$PROJECT_ID/compound-subgraph-wrapper:$TAG_NAME
 options:
   machineType: "N1_HIGHCPU_32"
 timeout: 900s
