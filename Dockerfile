@@ -7,6 +7,8 @@ ENV SOURCE_BRANCH "master"
 # Add the repository sources to the image
 COPY . /compound-subgraph-wrapper
 
+RUN ls -la /compound-subgraph-wrapper
+
 # Install dependencies and build server
 RUN cd /compound-subgraph-wrapper \
     && git checkout "$SOURCE_BRANCH" \
