@@ -6,11 +6,13 @@ ENV SOURCE_BRANCH "master"
 
 # Add the repository sources to the image
 COPY . /compound-subgraph-wrapper
-WORKDIR /compound-subgraph-wrapper
 
 # Install dependencies and build server
-RUN git checkout "$SOURCE_BRANCH" \
+RUN cd /compound-subgraph-wrapper \
+    && git checkout "$SOURCE_BRANCH" \
     && yarn --pure-lockfile \
     && yarn prepublish
+
+WORKDIR /compound-subgraph-wrapper
 
 ENTRYPOINT ["node", "dist/index.js"]
