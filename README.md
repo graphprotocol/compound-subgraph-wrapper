@@ -7,7 +7,7 @@ A wrapper service that extends the Compound subgraph with custom resolvers.
 - [x] Server application skeleton
 - [x] Remote subgraph schema integration
 - [x] Schema stitching example
-- [ ] Subscriptions
+- [x] Subscriptions
 - [ ] Deployment w/ proxy server
 - [ ] Real resolvers
 
