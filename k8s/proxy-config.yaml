@@ -33,8 +33,13 @@ data:
           proxy_cache_bypass $http_upgrade;
 
           # Gateway timeout.
-          proxy_read_timeout 3600s;
-          proxy_write_timeout 3600s;
+          if ( $connection_upgrade = "upgrade" ) {
+            proxy_read_timeout 3600s;
+            proxy_write_timeout 3600s;
+          } else {
+            proxy_read_timeout 60s;
+            proxy_send_timeout 60s;
+          }
         }
       }
 
