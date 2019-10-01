@@ -4,6 +4,7 @@ import bodyParser from 'body-parser'
 import winston from 'winston'
 import http from 'http'
 import WebSocket from 'ws'
+import BigNumber from 'bignumber.js'
 import { SubscriptionClient } from 'subscriptions-transport-ws'
 import { ApolloServer } from 'apollo-server-express'
 import { split } from 'apollo-link'
@@ -91,29 +92,71 @@ const createSchema = async (): Promise<GraphQLSchema> => {
   })
 
   let customSchema = `
-    extend type User {
-      customField: String!
+    # TODO: Implement later.
+    #
+    # extend type User {
+    #   accountLiquidity: BigDecimal!
+    #   availableToBorrowEth: BigDecimal!
+    # }
+
+    extend type CTokenInfo {
+      unrealizedLendBalance: BigDecimal!
+      unrealizedSupplyInterest: BigDecimal!
+      unrealizedBorrowBalance: BigDecimal!
+      unrealizedBorrowInterest: BigDecimal!
     }
   `
+
+  const unrealizedLendBalance = (cTokenInfo: any): BigNumber =>
+    new BigNumber(cTokenInfo.cTokenBalance).times(
+      new BigNumber(cTokenInfo.market.exchangeRate),
+    )
+
+  const unrealizedBorrowBalance = (cTokenInfo: any): BigNumber =>
+    new BigNumber(cTokenInfo.userBorrowIndex).eq(new BigNumber('0'))
+      ? new BigNumber('0')
+      : new BigNumber(cTokenInfo.realizedBorrowBalance)
+          .times(new BigNumber(cTokenInfo.market.borrowIndex))
+          .dividedBy(new BigNumber(cTokenInfo.userBorrowIndex))
 
   return mergeSchemas({
     schemas: [subgraphSchema, customSchema],
     resolvers: {
-      User: {
-        customField: {
-          fragment: `... on User { id }`,
-          resolve: (user, args, context, info) => {
-            return 'customValue'
-          },
+      // TODO: Implement this later.
+      //
+      // User: {
+      //   accountLiquidity: {}, // BigDecimal # totalSupplyInEth / totalBorrowInEth. 1.5 implies perfect collateralization (dangerous), if 150% is required. If null, it means the user currently has no borrows in the protocol TODO - delay implementing until query time calculations
+      //   availableToBorrowEth: {}, // BigDecimal # totalSupplyInEth / 1.5 - totalBorrow . null means use has never borrowed. . If null, it means the user currently has no borrows in the protocol. NOTE - collateral will not always be 1.5, this needs to be checked out when Comptroller is released TODO - delay implementing until query time calculations
+      // },
+      CTokenInfo: {
+        unrealizedLendBalance: {
+          fragment: `... on CTokenInfo { id cTokenBalance market { exchangeRate } }`,
+          resolve: (cTokenInfo, _args, _context, _info) =>
+            unrealizedLendBalance(cTokenInfo),
+        },
+        unrealizedSupplyInterest: {
+          fragment: `... on CTokenInfo { id cTokenBalance market { exchangeRate } realizedLendBalance }`,
+          resolve: (cTokenInfo, _args, _context, _info) =>
+            new BigNumber(unrealizedLendBalance(cTokenInfo)).minus(
+              new BigNumber(cTokenInfo.realizedLendBalance),
+            ),
+        },
+        unrealizedBorrowBalance: {
+          fragment: `... on CTokenInfo { id realizedBorrowBalance userBorrowIndex market { borrowIndex} }`,
+          resolve: (cTokenInfo, _args, _context, _info) =>
+            unrealizedBorrowBalance(cTokenInfo),
+        },
+        unrealizedBorrowInterest: {
+          fragment: `... on CTokenInfo { id realizedBorrowBalance userBorrowIndex market { borrowIndex} }`,
+          resolve: (cTokenInfo, _args, _context, _info) =>
+            unrealizedBorrowBalance(cTokenInfo).minus(
+              new BigNumber(cTokenInfo.realizedBorrowBalance),
+            ),
         },
       },
     },
   })
 }
-
-/**
- * GraphQL resolvers
- */
 
 /**
  * Server application
