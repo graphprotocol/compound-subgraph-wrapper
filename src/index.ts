@@ -94,66 +94,171 @@ const createSchema = async (): Promise<GraphQLSchema> => {
   })
 
   let customSchema = `
-    # TODO: Implement later.
-    #
-    # extend type User {
-    #   accountLiquidity: BigDecimal!
-    #   availableToBorrowEth: BigDecimal!
-    # }
+    extend type Account {
+      health: BigDecimal!
+      totalBorrowValueInEth: BigDecimal!
+      totalCollateralValueInEth: BigDecimal!
+    }
 
-    extend type CTokenInfo {
-      unrealizedLendBalance: BigDecimal!
-      unrealizedSupplyInterest: BigDecimal!
-      unrealizedBorrowBalance: BigDecimal!
-      unrealizedBorrowInterest: BigDecimal!
+    extend type AccountCToken {
+      supplyBalanceUnderlying: BigDecimal!
+      lifetimeSupplyInterestAccrued: BigDecimal!
+      borrowBalanceUnderlying: BigDecimal!
+      lifetimeBorrowInterestAccrued: BigDecimal!
     }
   `
 
-  const unrealizedLendBalance = (cTokenInfo: any): BigNumber =>
-    new BigNumber(cTokenInfo.cTokenBalance).times(
-      new BigNumber(cTokenInfo.market.exchangeRate),
+  const bignum = (value: string) => new BigNumber(value)
+
+  const supplyBalanceUnderlying = (cToken: any): BigNumber =>
+    bignum(cToken.cTokenBalance).times(cToken.market.exchangeRate)
+
+  const borrowBalanceUnderlying = (cToken: any): BigNumber =>
+    bignum(cToken.accountBorrowIndex).eq(bignum('0'))
+      ? bignum('0')
+      : bignum(cToken.storedBorrowBalance)
+          .times(cToken.market.borrowIndex)
+          .dividedBy(cToken.accountBorrowIndex)
+
+  const tokenInEth = (market: any): BigNumber =>
+    bignum(market.collateralFactor)
+      .times(market.exchangeRate)
+      .times(market.underlyingPrice)
+
+  const totalCollateralValueInEth = (account: any): BigNumber =>
+    account.tokens.reduce(
+      (acc, token) => acc.plus(tokenInEth(token.market).times(token.cTokenBalance)),
+      bignum('0'),
     )
 
-  const unrealizedBorrowBalance = (cTokenInfo: any): BigNumber =>
-    new BigNumber(cTokenInfo.userBorrowIndex).eq(new BigNumber('0'))
-      ? new BigNumber('0')
-      : new BigNumber(cTokenInfo.realizedBorrowBalance)
-          .times(new BigNumber(cTokenInfo.market.borrowIndex))
-          .dividedBy(new BigNumber(cTokenInfo.userBorrowIndex))
+  const totalBorrowValueInEth = (account: any): BigNumber =>
+    account.tokens.reduce(
+      (acc, token) =>
+        acc.plus(
+          bignum(token.market.underlyingPrice).times(borrowBalanceUnderlying(token)),
+        ),
+      bignum('0'),
+    )
 
   return mergeSchemas({
     schemas: [subgraphSchema, customSchema],
     resolvers: {
-      // TODO: Implement this later.
-      //
-      // User: {
-      //   accountLiquidity: {}, // BigDecimal # totalSupplyInEth / totalBorrowInEth. 1.5 implies perfect collateralization (dangerous), if 150% is required. If null, it means the user currently has no borrows in the protocol TODO - delay implementing until query time calculations
-      //   availableToBorrowEth: {}, // BigDecimal # totalSupplyInEth / 1.5 - totalBorrow . null means use has never borrowed. . If null, it means the user currently has no borrows in the protocol. NOTE - collateral will not always be 1.5, this needs to be checked out when Comptroller is released TODO - delay implementing until query time calculations
-      // },
-      CTokenInfo: {
-        unrealizedLendBalance: {
-          fragment: `... on CTokenInfo { id cTokenBalance market { exchangeRate } }`,
-          resolve: (cTokenInfo, _args, _context, _info) =>
-            unrealizedLendBalance(cTokenInfo),
+      Account: {
+        health: {
+          fragment: `
+            ... on Account {
+              id
+              tokens {
+                cTokenBalance
+                storedBorrowBalance
+                accountBorrowIndex
+                market {
+                  borrowIndex
+                  collateralFactor
+                  exchangeRate
+                  underlyingPrice
+                }
+              }
+            }
+          `,
+          resolve: (account, _args, _context, _info) => {
+            console.log(JSON.stringify(account, undefined, 2))
+
+            let totalBorrow = totalBorrowValueInEth(account)
+            return totalBorrow.eq('0')
+              ? totalCollateralValueInEth(account)
+              : totalCollateralValueInEth(account).dividedBy(totalBorrow)
+          },
         },
-        unrealizedSupplyInterest: {
-          fragment: `... on CTokenInfo { id cTokenBalance market { exchangeRate } realizedLendBalance }`,
-          resolve: (cTokenInfo, _args, _context, _info) =>
-            new BigNumber(unrealizedLendBalance(cTokenInfo)).minus(
-              new BigNumber(cTokenInfo.realizedLendBalance),
-            ),
+
+        totalBorrowValueInEth: {
+          fragment: `
+            ... on Account {
+              id
+              tokens {
+                cTokenBalance
+                storedBorrowBalance
+                accountBorrowIndex
+                market {
+                  borrowIndex
+                  collateralFactor
+                  exchangeRate
+                  underlyingPrice
+                }
+              }
+            }
+          `,
+          resolve: (account, _args, _context, _info) => totalBorrowValueInEth(account),
         },
-        unrealizedBorrowBalance: {
-          fragment: `... on CTokenInfo { id realizedBorrowBalance userBorrowIndex market { borrowIndex} }`,
-          resolve: (cTokenInfo, _args, _context, _info) =>
-            unrealizedBorrowBalance(cTokenInfo),
+
+        totalCollateralValueInEth: {
+          fragment: `
+            ... on Account {
+              id
+              tokens {
+                cTokenBalance
+                market {
+                  collateralFactor
+                  exchangeRate
+                  underlyingPrice
+                }
+              }
+            }
+          `,
+          resolve: (account, _args, _context, _info) =>
+            totalCollateralValueInEth(account),
         },
-        unrealizedBorrowInterest: {
-          fragment: `... on CTokenInfo { id realizedBorrowBalance userBorrowIndex market { borrowIndex} }`,
-          resolve: (cTokenInfo, _args, _context, _info) =>
-            unrealizedBorrowBalance(cTokenInfo).minus(
-              new BigNumber(cTokenInfo.realizedBorrowBalance),
-            ),
+      },
+
+      AccountCToken: {
+        supplyBalanceUnderlying: {
+          fragment: `... on AccountCToken { id cTokenBalance market { exchangeRate } }`,
+          resolve: (cToken, _args, _context, _info) => supplyBalanceUnderlying(cToken),
+        },
+
+        lifetimeSupplyInterestAccrued: {
+          fragment: `
+            ... on AccountCToken {
+              id
+              cTokenBalance
+              market { exchangeRate }
+              totalUnderlyingSupplied
+              totalUnderlyingRedeemed
+            }
+          `,
+          resolve: (cToken, _args, _context, _info) =>
+            supplyBalanceUnderlying(cToken)
+              .minus(cToken.totalUnderlyingSupplied)
+              .plus(cToken.totalUnderlyingRedeemed),
+        },
+
+        borrowBalanceUnderlying: {
+          fragment: `
+            ... on AccountCToken {
+              id
+              storedBorrowBalance
+              accountBorrowIndex
+              market { borrowIndex }
+            }
+          `,
+          resolve: (cToken, _args, _context, _info) => borrowBalanceUnderlying(cToken),
+        },
+
+        lifetimeBorrowInterestAccrued: {
+          fragment: `
+            ... on AccountCToken {
+              id
+              storedBorrowBalance
+              accountBorrowIndex
+              market { borrowIndex }
+              totalUnderlyingBorrowed
+              totalUnderlyingRepaid
+            }
+          `,
+          resolve: (cToken, _args, _context, _info) =>
+            borrowBalanceUnderlying(cToken)
+              .minus(cToken.totalUnderlyingBorrowed)
+              .plus(cToken.totalUnderlyingRepaid),
         },
       },
     },
