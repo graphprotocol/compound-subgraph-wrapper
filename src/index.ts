@@ -95,7 +95,7 @@ const createSchema = async (): Promise<GraphQLSchema> => {
 
   let customSchema = `
     extend type Account {
-      health: BigDecimal!
+      health: BigDecimal
       totalBorrowValueInEth: BigDecimal!
       totalCollateralValueInEth: BigDecimal!
     }
@@ -132,13 +132,15 @@ const createSchema = async (): Promise<GraphQLSchema> => {
     )
 
   const totalBorrowValueInEth = (account: any): BigNumber =>
-    account.tokens.reduce(
-      (acc, token) =>
-        acc.plus(
-          bignum(token.market.underlyingPrice).times(borrowBalanceUnderlying(token)),
-        ),
-      bignum('0'),
-    )
+    !account.hasBorrowed
+      ? bignum('0')
+      : account.tokens.reduce(
+          (acc, token) =>
+            acc.plus(
+              bignum(token.market.underlyingPrice).times(borrowBalanceUnderlying(token)),
+            ),
+          bignum('0'),
+        )
 
   return mergeSchemas({
     schemas: [subgraphSchema, customSchema],
@@ -148,6 +150,7 @@ const createSchema = async (): Promise<GraphQLSchema> => {
           fragment: `
             ... on Account {
               id
+              hasBorrowed
               tokens {
                 cTokenBalance
                 storedBorrowBalance
@@ -162,12 +165,14 @@ const createSchema = async (): Promise<GraphQLSchema> => {
             }
           `,
           resolve: (account, _args, _context, _info) => {
-            console.log(JSON.stringify(account, undefined, 2))
-
-            let totalBorrow = totalBorrowValueInEth(account)
-            return totalBorrow.eq('0')
-              ? totalCollateralValueInEth(account)
-              : totalCollateralValueInEth(account).dividedBy(totalBorrow)
+            if (!account.hasBorrowed) {
+              return null
+            } else {
+              let totalBorrow = totalBorrowValueInEth(account)
+              return totalBorrow.eq('0')
+                ? totalCollateralValueInEth(account)
+                : totalCollateralValueInEth(account).dividedBy(totalBorrow)
+            }
           },
         },
 
@@ -175,6 +180,7 @@ const createSchema = async (): Promise<GraphQLSchema> => {
           fragment: `
             ... on Account {
               id
+              hasBorrowed
               tokens {
                 cTokenBalance
                 storedBorrowBalance
