@@ -60,7 +60,8 @@ interface GraphQLContext {
 
 const createQueryNodeHttpLink = () =>
   new HttpLink({
-    uri: 'https://api.thegraph.com/subgraphs/name/compound-finance/compound-v2',
+    // uri: 'https://api.thegraph.com/subgraphs/name/compound-finance/compound-v2',
+    uri: 'https://api.staging.thegraph.com/subgraphs/name/davekaj/compoundv2',
     fetch: fetch as any,
   })
 
@@ -69,7 +70,8 @@ const createSchema = async (): Promise<GraphQLSchema> => {
   let remoteSchema = await introspectSchema(httpLink)
 
   const subscriptionClient = new SubscriptionClient(
-    'wss://api.thegraph.com/subgraphs/name/compound-finance/compound-v2',
+    // 'wss://api.thegraph.com/subgraphs/name/compound-finance/compound-v2',
+    'wss://api.staging.thegraph.com/subgraphs/name/davekaj/compoundv2',
     {
       reconnect: true,
     },
