@@ -17,7 +17,7 @@ spec:
           configMap:
             name: compound-subgraph-wrapper-proxy-config
       containers:
-        - name: compound-subgraph-wrapper-proxy
+        - name: proxy
           image: nginx:latest
           ports:
             - containerPort: 80
@@ -25,7 +25,7 @@ spec:
             - name: proxy-config
               mountPath: /etc/nginx/nginx.conf
               subPath: nginx.conf
-        - name: compound-subgraph-wrapper
+        - name: wrapper
           image: compound-subgraph-wrapper:pre-kustomize-invalid
           ports:
             - name: http

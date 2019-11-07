@@ -7,7 +7,12 @@ steps:
   # Build Docker image
   - name: "gcr.io/cloud-builders/docker"
     args:
-      ["build", "-t", "gcr.io/$PROJECT_ID/compound-subgraph-wrapper:$SHORT_SHA", "."]
+      [
+        "build",
+        "-t",
+        "gcr.io/$PROJECT_ID/compound-subgraph-wrapper:$SHORT_SHA",
+        ".",
+      ]
 
   # Inject Docker image into the deployment manifest
   - name: "gcr.io/$PROJECT_ID/kustomize"
@@ -16,7 +21,7 @@ steps:
         "edit",
         "set",
         "image",
-        "compound-subgraph-wrapper=gcr.io/$PROJECT_ID/compound-subgraph-wrapper:$SHORT_SHA",
+        "wrapper=gcr.io/$PROJECT_ID/compound-subgraph-wrapper:$SHORT_SHA",
       ]
     dir: k8s
     env:
