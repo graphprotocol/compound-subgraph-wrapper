@@ -22,9 +22,13 @@ data:
         }
 
         # Strip off the /subgraphs/name/(.*)/(.*)/ prefix
-        rewrite ^/subgraphs/name/.*/.*(/.*)$ $1;
+        rewrite ^.*$ /graphql;
 
         location / {
+          # Rewrite the URL for the proxy and stop rewriting so
+          # we don't trigger the above `location = /` match.
+          rewrite ^.*$ / break;
+
           # Proxy configuration.
           proxy_pass http://127.0.0.1:9500/;
           proxy_http_version 1.1;
