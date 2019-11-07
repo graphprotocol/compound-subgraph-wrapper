@@ -297,6 +297,12 @@ const run = async () => {
       baseMeta: { component: 'Server' },
     }),
   )
+  app.use(
+    expressWinston.errorLogger({
+      transports: [loggerTransport],
+      baseMeta: { component: 'Server' },
+    }),
+  )
 
   logger.info(`Create Apollo server`)
   const apolloServer = new ApolloServer({
