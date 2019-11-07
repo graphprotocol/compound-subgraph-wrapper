@@ -21,7 +21,7 @@ steps:
         "edit",
         "set",
         "image",
-        "wrapper=gcr.io/$PROJECT_ID/compound-subgraph-wrapper:$TAG_NAME",
+        "compound-subgraph-wrapper=gcr.io/$PROJECT_ID/compound-subgraph-wrapper:$TAG_NAME",
       ]
     dir: k8s
     env:
