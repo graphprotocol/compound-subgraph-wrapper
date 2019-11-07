@@ -58,10 +58,20 @@ interface GraphQLContext {
  * GraphQL schema
  */
 
+const SUBGRAPH_QUERY_ENDPOINT = process.env.SUBGRAPH_QUERY_ENDPOINT
+const SUBGRAPH_SUBSCRIPTION_ENDPOINT = process.env.SUBGRAPH_SUBSCRIPTION_ENDPOINT
+
+if (!SUBGRAPH_QUERY_ENDPOINT) {
+  throw new Error('Environment variable SUBGRAPH_QUERY_ENDPOINT is not set')
+}
+
+if (!SUBGRAPH_SUBSCRIPTION_ENDPOINT) {
+  throw new Error('Environment variable SUBGRAPH_SUBSCRIPTION_ENDPOINT is not set')
+}
+
 const createQueryNodeHttpLink = () =>
   new HttpLink({
-    // uri: 'https://api.thegraph.com/subgraphs/name/compound-finance/compound-v2',
-    uri: 'https://api.staging.thegraph.com/subgraphs/name/davekaj/compoundv2',
+    uri: SUBGRAPH_QUERY_ENDPOINT,
     fetch: fetch as any,
   })
 
@@ -70,8 +80,7 @@ const createSchema = async (): Promise<GraphQLSchema> => {
   let remoteSchema = await introspectSchema(httpLink)
 
   const subscriptionClient = new SubscriptionClient(
-    // 'wss://api.thegraph.com/subgraphs/name/compound-finance/compound-v2',
-    'wss://api.staging.thegraph.com/subgraphs/name/davekaj/compoundv2',
+    SUBGRAPH_SUBSCRIPTION_ENDPOINT,
     {
       reconnect: true,
     },

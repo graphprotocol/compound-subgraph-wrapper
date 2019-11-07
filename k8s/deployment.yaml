@@ -33,3 +33,8 @@ spec:
           env:
             - name: NODE_ENV
               value: production
+            - name: SUBGRAPH_QUERY_ENDPOINT
+              value: http://query-node.default.svc.cluster.local/subgraphs/name/davekaj/compound-v2
+            - name: SUBGRAPH_SUBSCRIPTION_ENDPOINT
+              value: ws://query-node.default.svc.cluster.local/subgraphs/name/davekaj/compound-v2
+
