@@ -1,0 +1,12 @@
+apiVersion: apps/v1beta2
+kind: Deployment
+spec:
+  template:
+    spec:
+      containers:
+        - name: wrapper
+          env:
+            - name: SUBGRAPH_QUERY_ENDPOINT
+              value: http://query-node.default.svc.cluster.local/subgraphs/name/davekaj/compoundv2
+            - name: SUBGRAPH_SUBSCRIPTION_ENDPOINT
+              value: ws://query-node.default.svc.cluster.local/subgraphs/name/davekaj/compoundv2

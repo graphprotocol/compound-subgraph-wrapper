@@ -23,14 +23,14 @@ steps:
         "image",
         "compound-subgraph-wrapper=gcr.io/$PROJECT_ID/compound-subgraph-wrapper:$SHORT_SHA",
       ]
-    dir: k8s
+    dir: k8s/base
     env:
       - "CLOUDSDK_COMPUTE_ZONE=us-central1-a"
       - "CLOUDSDK_CONTAINER_CLUSTER=hosted-service"
 
   # Deploy configuration
   - name: "gcr.io/$PROJECT_ID/kustomize"
-    args: ["build", "k8s/"]
+    args: ["build", "k8s/overlays/staging/"]
     env:
       - "APPLY=true"
       - "CLOUDSDK_COMPUTE_ZONE=us-central1-a"
