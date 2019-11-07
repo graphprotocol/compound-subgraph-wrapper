@@ -2,6 +2,7 @@ import express from 'express'
 import expressWs from 'express-ws'
 import bodyParser from 'body-parser'
 import winston from 'winston'
+import expressWinston from 'express-winston'
 import http from 'http'
 import WebSocket from 'ws'
 import BigNumber from 'bignumber.js'
@@ -289,6 +290,13 @@ const run = async () => {
   const { app } = expressWs(express())
   app.use(bodyParser.json())
   app.use(bodyParser.urlencoded({ extended: true }))
+  app.use(
+    expressWinston.logger({
+      level: 'debug',
+      transports: [loggerTransport],
+      baseMeta: { component: 'Server' },
+    }),
+  )
 
   logger.info(`Create Apollo server`)
   const apolloServer = new ApolloServer({
