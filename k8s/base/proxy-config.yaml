@@ -21,8 +21,9 @@ data:
           }
         }
 
-        # Strip off the /subgraphs/name/(.*)/(.*)/ prefix
-        rewrite ^.*$ /graphql;
+        # Replace any URL that's longer than `/` with `/graphql` to proxy
+        # these requests to the wrapper.
+        rewrite ^/.+$ /graphql;
 
         location / {
           # Rewrite the URL for the proxy and stop rewriting so
