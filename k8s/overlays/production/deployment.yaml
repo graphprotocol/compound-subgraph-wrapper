@@ -9,6 +9,6 @@ spec:
         - name: wrapper
           env:
             - name: SUBGRAPH_QUERY_ENDPOINT
-              value: http://query-node.default.svc.cluster.local/subgraphs/name/davekaj/compound-v2
+              value: http://query-node.default.svc.cluster.local/subgraphs/name/graphprotocol/compound-v2
             - name: SUBGRAPH_SUBSCRIPTION_ENDPOINT
-              value: ws://query-node.default.svc.cluster.local/subgraphs/name/davekaj/compound-v2
+              value: ws://query-node.default.svc.cluster.local/subgraphs/name/graphprotocol/compound-v2
