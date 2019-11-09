@@ -136,7 +136,7 @@ const createSchema = async (): Promise<GraphQLSchema> => {
       .times(market.underlyingPrice)
 
   const totalCollateralValueInEth = (account: any): BigNumber =>
-    account.tokens.reduce(
+    account.___tokens.reduce(
       (acc, token) => acc.plus(tokenInEth(token.market).times(token.cTokenBalance)),
       bignum('0'),
     )
@@ -144,7 +144,7 @@ const createSchema = async (): Promise<GraphQLSchema> => {
   const totalBorrowValueInEth = (account: any): BigNumber =>
     !account.hasBorrowed
       ? bignum('0')
-      : account.tokens.reduce(
+      : account.___tokens.reduce(
           (acc, token) =>
             acc.plus(
               bignum(token.market.underlyingPrice).times(borrowBalanceUnderlying(token)),
@@ -161,7 +161,7 @@ const createSchema = async (): Promise<GraphQLSchema> => {
             ... on Account {
               id
               hasBorrowed
-              tokens {
+              ___tokens: tokens {
                 cTokenBalance
                 storedBorrowBalance
                 accountBorrowIndex
@@ -191,7 +191,7 @@ const createSchema = async (): Promise<GraphQLSchema> => {
             ... on Account {
               id
               hasBorrowed
-              tokens {
+              ___tokens: tokens {
                 cTokenBalance
                 storedBorrowBalance
                 accountBorrowIndex
@@ -211,7 +211,7 @@ const createSchema = async (): Promise<GraphQLSchema> => {
           fragment: `
             ... on Account {
               id
-              tokens {
+              ___tokens: tokens {
                 cTokenBalance
                 market {
                   collateralFactor
