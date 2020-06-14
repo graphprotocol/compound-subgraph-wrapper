@@ -26,3 +26,9 @@ yarn dev
 ```
 
 so it automatically restarts as you make changes to the source code.
+
+## License
+
+Copyright &copy; 2019-2020 Graph Protocol, Inc.
+
+This software is licensed under the [MIT license](./LICENSE-MIT).
