@@ -1,4 +1,4 @@
-import express from 'express'
+import express, { Request, Response, NextFunction } from 'express'
 import expressWs from 'express-ws'
 import bodyParser from 'body-parser'
 import winston from 'winston'
@@ -285,9 +285,24 @@ const createSchema = async (): Promise<GraphQLSchema> => {
  * Server application
  */
 
+// Define the middleware
+const rejectBadHeaders = async (req: Request, res: Response, next: NextFunction) => {
+  if (
+    req.headers['challenge-bypass-token'] ||
+    req.headers['x_proxy_id']
+    // Note: This one doesn't work on Google Cloud:
+    // req.headers["via"]
+  ) {
+    return res.status(400).send('Bad Request')
+  } else {
+    next()
+  }
+}
+
 const run = async () => {
   logger.info(`Create application`)
   const { app } = expressWs(express())
+  app.use(rejectBadHeaders)
   app.use(bodyParser.json())
   app.use(bodyParser.urlencoded({ extended: true }))
   app.use(
